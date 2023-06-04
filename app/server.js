@@ -62,6 +62,21 @@ io.on("connection", (socket) => {
             }
         );
 
+        socket.on("send file from client to server", (messageText, fileName, callback) => {
+            const filter = new Filter();
+            if (filter.isProfane(messageText)) {
+                return callback("Profanity is not allowed");
+            }
+            const id = socket.id;
+            const user = findUser(id);
+            console.log(fileName);
+            io.to(room).emit(
+                "send file from server to client",
+                createMessage(messageText, user.username, fileName)
+            );
+            callback();
+        });
+
         // ngat ket noi
         socket.on("disconnect", () => {
             removeUser(socket.id);

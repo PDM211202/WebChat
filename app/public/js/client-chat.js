@@ -64,6 +64,48 @@ socket.on("share location from server to client", (data) => {
     }
 });
 
+window.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('file-input-img');
+    const customButton = document.getElementById('btn-send-img');
+
+    customButton.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', () => {
+        const files = fileInput.files;
+
+        const messageText = document.getElementById("input-messages").value;
+        const formData = new FormData(); // Create a new FormData object
+        formData.append("image", files[0]);
+        // Make a POST request to the API
+        fetch("http://localhost:4000/upload/image", {
+            method: "POST",
+            body: formData,
+        })
+        const acknowledgements = (errors) => {
+            if (errors) {
+                return alert("tin nhắn không hợp lệ");
+            }
+            console.log("tin nhắn đã gửi thành công");
+        };
+        socket.emit(
+            "send file from client to server",
+            messageText,
+            files[0].name,
+            acknowledgements
+        );
+    });
+});
+
+socket.on("send file from server to client", (message) => {
+    const { createAt, messageText, username, imageName } = message;
+    if (username !== params.username) {
+        showImageOfOthers(username, createAt, messageText, imageName)
+    } else {
+        showImageOfSender(username, createAt, messageText, imageName)
+    }
+});
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -159,4 +201,56 @@ const showLocationOfSender = (username, createAt, messageText) => {
 
     //hien thi len man hinh
     document.getElementById("app__messages").innerHTML = contentRender;
+}
+
+// show img của nguoi gui
+const showImageOfSender = (username, createAt, messageText, fileName) => {
+    const contentHtml = document.getElementById("app__messages").innerHTML;
+    const messageElement = `
+      <div class="chat-message-right mb-4">
+    <div>
+      <img src="https://bootdey.com/img/Content/avatar/avatar1.png"
+        class="rounded-circle mr-1" alt="Chris Wood" width="40" height="40">
+          <div class="text-muted small text-nowrap mt-2">${createAt}</div>
+                                    </div>
+                                    <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
+                                        <div class="font-weight-bold mb-1">${username}</div>
+                                        <img src="http://localhost:4000/uploads/images/${fileName}" />
+                                        <p>${messageText}</p>
+                                    </div>
+                                </div>
+    `;
+    let contentRender = contentHtml + messageElement;
+
+    //hien thi len man hinh
+    document.getElementById("app__messages").innerHTML = contentRender;
+
+    //clear input messages
+    document.getElementById("input-messages").value = "";
+}
+
+const showImageOfOthers = (username, createAt, messageText, fileName) => {
+    const contentHtml = document.getElementById("app__messages").innerHTML;
+    console.log(fileName);
+    const messageElement = `
+    <div class="chat-message-left mb-4">
+    <div>
+      <img src="https://bootdey.com/img/Content/avatar/avatar1.png"
+        class="rounded-circle mr-1" alt="Chris Wood" width="40" height="40">
+          <div class="text-muted small text-nowrap mt-2">${createAt}</div>
+                                    </div>
+                                    <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
+                                        <div class="font-weight-bold mb-1">${username}</div>
+                                        <img src="http://localhost:4000/uploads/images/${fileName}" />
+                                        <p>${messageText}</p>
+                                    </div>
+                                </div>
+  `;
+    let contentRender = contentHtml + messageElement;
+
+    //hien thi len man hinh
+    document.getElementById("app__messages").innerHTML = contentRender;
+
+    //clear input messages
+    document.getElementById("input-messages").value = "";
 }
