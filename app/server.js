@@ -48,6 +48,20 @@ io.on("connection", (socket) => {
             callback();
         });
 
+        // xu ly chia se vi tri
+        socket.on(
+            "share location from client to server",
+            ({ latitude, longitude }) => {
+                const linkLocation = `https://www.google.com/maps?q=${latitude},${longitude}`;
+                const id = socket.id;
+                const user = findUser(id);
+                io.to(room).emit(
+                    "share location from server to client",
+                    createMessage(linkLocation, user.username)
+                );
+            }
+        );
+
         // ngat ket noi
         socket.on("disconnect", () => {
             removeUser(socket.id);
