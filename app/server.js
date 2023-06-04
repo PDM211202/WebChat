@@ -3,7 +3,9 @@ const app = express();
 const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io");
-
+const Filter = require("bad-words");
+const { createMessage } = require("./utils/create-messages");
+const { getUserList, addUser, removeUser, findUser } = require("./utils/users");
 
 const publicPathDirectory = path.join(__dirname, "../public");
 app.use(express.static(publicPathDirectory));
@@ -28,6 +30,23 @@ io.on("connection", (socket) => {
                 "send message from server to client",
                 createMessage(`${username} vua tham gia vao phong`, "admin")
             );
+
+        //chat - xu ly tin nhan tu user gui den va gui lai den moi nguoi trong room
+        socket.on("send message from client to server", (messageText, callback) => {
+            const filter = new Filter();
+            if (filter.isProfane(messageText)) {
+                return callback("Profanity is not allowed");
+            }
+
+            const id = socket.id;
+            const user = findUser(id);
+
+            io.to(room).emit(
+                "send message from server to client",
+                createMessage(messageText, user.username)
+            );
+            callback();
+        });
 
         // ngat ket noi
         socket.on("disconnect", () => {
