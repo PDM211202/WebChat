@@ -77,6 +77,31 @@ io.on("connection", (socket) => {
             callback();
         });
 
+        socket.on("send video from client to server", (messageText, fileName, callback) => {
+            const filter = new Filter();
+            if (filter.isProfane(messageText)) {
+                return callback("Profanity is not allowed");
+            }
+
+            const id = socket.id;
+            const user = findUser(id);
+
+            io.to(room).emit(
+                "send video from server to client",
+                createMessage(messageText, user.username, fileName)
+            );
+            callback();
+        });
+
+        //xu ly userlist
+        const newUser = {
+            id: socket.id,
+            username,
+            room,
+        };
+        addUser(newUser);
+        io.to(room).emit("send user list from server to client", getUserList(room));
+
         // ngat ket noi
         socket.on("disconnect", () => {
             removeUser(socket.id);
@@ -87,6 +112,11 @@ io.on("connection", (socket) => {
         });
     });
 });
+
+const uploadImage = require("./upload-img-router");
+const uploadVideo = require("./upload-video-router");
+app.use("/upload", uploadImage);
+app.use("/upload", uploadVideo);
 
 
 const port = 4000;
